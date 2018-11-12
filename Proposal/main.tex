@@ -1,0 +1,92 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+
+\title{CS229 Project Proposal \\
+\LARGE Peak Baseball Career Performance from Early Career Indicators \\
+\small Category: Athletics and Sensing Devices}
+\author{Paavani Dua (paavanid), Liam Kelly (kellylj),\\ and Matthew Lee (mattskl)}
+\date{19 October 2018}
+
+\begin{document}
+
+\maketitle
+
+% \section{Introduction}
+
+% Specific project ideas:
+% - projecting a players “peak” performance year based on their first 3-5 years
+% - determining what player characteristics contribute most to home game attendance (normalized by win percentage or something?)
+
+% Eval metrics:
+% - technical quality
+% - significance (is it a real problem? can the results be applied somewhere and have impact?)
+% - novelty (try to tweak common technique to something more novel I guess)
+
+% Points to hit:
+% Your project proposal should include the following information:
+% Motivation: What problem are you tackling? Is this an application or a theoretical result?
+% - sports area; determining the optimal point in an athlete's career - somewhat of an extension on 'who should be on my fantasy football team?'. Perhaps applying performance per \$ metric. 
+ 
+% Method: What machine learning techniques are you planning to apply or improve upon?
+% LTSM
+
+% Intended experiments: What experiments are you planning to run? How do you plan to evaluate your machine learning algorithm?
+
+% Presenting pointers to one relevant dataset and one example of prior research on the topic are a valuable (optional) addition.
+% Datasets:https://toolbox.google.com/datasetsearch/search?query=mlb&docid=LXdg2aMX6wesrVNyAAAAAA%3D%3D -- 1870 to 2016 MLB dataset.
+% Might want to pick a sport (like baseball) with low chance of injury but potentially still high dependence on age/fitness (if we want good prediction rate, probs dont want sudden end to careers etc.)
+
+
+% Published research references:
+% https://search.proquest.com/docview/1311949773?pq-origsite=gscholar - manual selection of features + running regression with hand-selected subset of them
+% https://dl.acm.org/citation.cfm?id=641081
+
+% Similar previous projects:
+% Understanding Career Progression in Baseball Through Machine Learning - http://cs229.stanford.edu/proj2017/final-reports/5216878.pdf
+% Predicting Pitchers' Early Career Value From Rookie Year Performance - http://cs229.stanford.edu/proj2016/report/AspergerPoore-PredictingPitchersEarlyCareerValueFromRookieStatistics-report.pdf
+% Using Pre-NBA Data to Predict Early NBA Career Success - http://cs229.stanford.edu/proj2015/120_report.pdf
+% Predicting Career Paths of NBA Players - http://cs229.stanford.edu/proj2012/ShahCouslandRobbins-PredictingCareerPathsOfNBAPlayers.pdf
+% Using Machine Learning Algorithms to Identify Undervalued Baseball Players - http://cs229.stanford.edu/proj2016/report/Ishii-UsingMachineLearningAlgorithmsToIdentifyUndervaluedBaseballPlayers-report.pdf
+% [1] Mitchell, Chris. “Forecasting Major League Hitting with Minor League Stats”. ​The Hardball Times. Web. Dec. 30 2014. <http://www.hardballtimes.com/katoh-forecasting-a-hitters-major-league-performance-with-minor-league-stats/>
+
+% http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.650.468&rep=rep1&type=pdf - MLB average salary/contract length (2yrs)
+
+% "While a rookie can expect to play 5.6 years, a player in his third season can expect to play six additional years" - https://www.nytimes.com/2007/07/15/sports/baseball/15careers.html
+
+
+% "As long as your proposal follows the instructions above and the project seems to have been thought out with a reasonable plan, you should do well on the proposal"
+
+% Project proposal
+For our project, we intend to investigate how major league baseball players evolve over their career. In particular, we would like to look at player performance, and predict what season in a player's career they are at their peak based on their first three seasons. This is an application project and this type of analysis is motivated by a team interested in trading for different players and fantasy baseball players choosing teams at the beginning of each season. Knowing which season a player is expected to be at their peak (barring injuries) will provide teams knowledge on when to hire someone and for players to know if they should be asking for more money in a contract. A team looking at a multi-year contract with a player that would include the predicted best year may also consider this analysis when negotiating the contract.
+
+% Motivation/Methods
+When deciding which sport we wanted to investigate, we settled on baseball due to the large number of games (162 in a season) and relatively low number of injuries providing a large amount of data for us.  The project will entail deciding key performance indicators (KPIs) to focus on, such as looking at different positions ie batting, fielding and pitching, the players ages, the team they play for each season, their salary and running linear regressions on them to predict KPIs per season, then computing a score for those to determine the max for each player. By looking at different positions individually for the different KPIs, we anticipate running a number of experiments to evaluate the algorithm and determine which input features are best for each position.
+Furthermore, we would look at applying SVR which is an extension of an SVM for linear regression to learn KPIs without supervision and employ LSTM since a person's career has a strong time dependence.
+
+% Previous research
+%There has been tons of research into baseball performance and correlations. \href{https://fivethirtyeight.com/features/older-hitters-are-declining-but-its-not-because-they-cant-stand-the-heat/}{Fivethirtyeight} has analyzed pitching and hitting with respect to age, but hasn't done prediction based on it.
+%-> there are career projection papers;
+While there is numerous previous research into the value of a sports player, many focus solely on the player's career projection [a][b], many focus on immediate performance only [c][d] and make predictions based on their age range [e]. Wins Above Replacement (WAR) is also widely used as a metric to compare players to each other and their contribution to their particular team, but does not predict a player's growth.  We hope to leverage the techniques used in these works to help find players at the highest performance stage of their career. %need better wording.
+
+% Our dataset
+We plan to use the \href{https://www.kaggle.com/arashnic/baseballdatabank}{Baseball Data} dataset from Kaggle, which contains statistics on each player every season since 1871. Our first task would be to pre-process the dataset and edit KPIs since age has not been given as a KPI in this particular dataset, then further scrape through the data since statistics tracked have changed overtime. Once we have cleaned this dataset, we will be able to run through the above algorithms and predict peak performance. Specifically, we would set aside a subset of players to exclude from the training set, and see if our trained model produces accurate predictions on this validation set.
+
+\begin{sloppypar}
+\begin{flushleft}
+
+[a] Understanding Career Progression in Baseball Through Machine Learning - http://cs229.stanford.edu/proj2017/final-reports/5216878.pdf
+
+[b] Predicting Career Paths of NBA Players - http://cs229.stanford.edu/proj2012/ShahCouslandRobbins-PredictingCareerPathsOfNBAPlayers.pdf
+
+[c] Beating fantasy football - http://cs229.stanford.edu/proj2016/report/Fox-BeatingDailyFantasyFootball-report.pdf
+
+[d] Machine Learning for Daily Fantasy Football Quarterback Selection - http://cs229.stanford.edu/proj2015/111\_report.pdf
+
+[e]What is a baseball player's prime age?
+https://www.bostonglobe.com/sports/2015/01/02/what-baseball-player-prime-age/mS39neFWm4hrVukT6lSYuK/story.html
+\end{flushleft}
+
+\end{sloppypar}
+
+\end{document}
