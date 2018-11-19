@@ -7,3 +7,4 @@ dependencies:
   - pip=10.0.1
   - python=3.6.6
   - pandas=0.23.4
+  - scikit-learn=0.20.0

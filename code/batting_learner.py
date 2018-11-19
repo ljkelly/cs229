@@ -63,6 +63,16 @@ def clean_batting_dataset(attr_subset, csv_path='../baseballdatabank/Batting.csv
 
 # function to split data into train/test sets
 def split_data(data_dict, frac_train=0.9):
+    """Split a python dictionary into train and test datasets
+
+    Args:
+        data_dict: a python dictionary you want to split
+        frac_train: the fraction of data wanted in the training dataset
+
+    Returns:
+        train_set: the data captured by frac_train
+        test_set: the data captured by (1-frac_train)
+    """
     keys_list = list(data_dict.keys())
     np.random.shuffle(keys_list)
     data_size = len(keys_list)
@@ -84,6 +94,12 @@ def split_data(data_dict, frac_train=0.9):
 
 # functions to save off and load modified dataset appropriately
 def write_json(data_dict, json_path):
+    """Save a dictionary of pandas DataFrames to a json file
+
+    Args:
+        data_dict: a dictionary of pandas DataFrams
+        json_path: the path to the file being saved to        
+    """
     copy_dict = dict()
     for key, value in data_dict.items():
         copy_dict[key] = value.to_dict()
@@ -92,6 +108,14 @@ def write_json(data_dict, json_path):
         json.dump(copy_dict, fp)
 
 def read_json(json_path):
+    """Load a json dataset that is dict of pandas DataFrames
+
+    Args:
+        json_path: the path to the file being read from
+
+    Returns:
+        data_dict: a dictionary of pandas DataFrams
+    """
     with open(json_path, 'r') as fp:
         copy_dict = json.load(fp)
     data_dict = dict()
@@ -134,8 +158,8 @@ def make_labels_and_feature_matrix(dataset):
     # Determine number of player data entries,
     # where each year of data is counted independently.
     tot_entries = 0
-    for key in train.keys():
-        tot_entries += len(train[key])
+    for key in dataset.keys():
+        tot_entries += len(dataset[key])
 
     # Keep just the # of games, normalized stats, and year in league
     subattr = [2] + list(range(14,26))
@@ -144,11 +168,11 @@ def make_labels_and_feature_matrix(dataset):
     y = np.empty(tot_entries)
 
     i = 0
-    for key in train.keys():
-        ds = train[key].values
+    for key in dataset.keys():
+        ds = dataset[key].values
         for year in range(ds.shape[0]):
             x[i,:] = ds[year,subattr]
-            y[i] = ds[year,26]    # career length
+            y[i] = ds[-1,-1]    # career length
             i += 1
 
     return x, y
@@ -183,12 +207,21 @@ if __name__ == '__main__':
     # print(reg.coef_)
     # print(reg.intercept_)
     y_pred = reg.predict(x_test)
+    deltas = y_pred-y_test
     # print(y_pred)
     # print(y_test)
     np.savetxt("./output/prediction.txt", y_pred)
     np.savetxt("./output/labels.txt", y_test)
-    np.savetxt("./output/deltas.txt", y_pred-y_test)
+    np.savetxt("./output/deltas.txt", deltas)
     # delta = abs(y_pred - y_test)/len(y_pred)
     # deviation = sum(delta)
     # print(deviation)
-
+    print('Average error: ', np.mean(abs(y_pred - y_test)))
+    poly = np.polyfit(y_test, y_pred, 1)
+    y_reg = poly[0] * y_test + poly[1]
+    plt.scatter(y_test, y_pred)
+    plt.plot(y_test, y_reg, 'r')
+    plt.xlabel('True number of years in the league')
+    plt.ylabel('Predicted number of years in the league')
+    plt.title('Linear Regression data comparison')
+    plt.savefig('output/linear_reg_output.png')
