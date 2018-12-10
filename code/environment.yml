@@ -66,5 +66,5 @@ dependencies:
   - pytorch=1.0.0=py3.6_1
   - pip:
     - torch==1.0.0
-prefix: /Users/mattskl/miniconda3/envs/cs229-proj
+# prefix: /Users/mattskl/miniconda3/envs/cs229-proj
 

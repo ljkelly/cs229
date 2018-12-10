@@ -308,6 +308,56 @@ def three_year_test(train, test):
     plt.savefig('output/triplet_reg_output.png')
     plt.clf()
 
+def make_triplet_max_run_feature_matrix(dataset, feature_set):
+    """ Take dataset in dictionary form and create feature matrix and label
+        vector from it, with each row being the first three years features
+        in feature_set.
+    """
+    num_rows = len(dataset.keys())
+    num_features = len(feature_set) - 1
+    num_cols = 3 * num_features
+
+    x = np.zeros((num_rows, num_cols))
+    y = np.zeros(num_rows)
+
+    i = 0
+    for key, val in dataset.items():
+        ds = dataset[key].values
+        for year in range(3):
+            start_idx = year * num_features
+            end_idx = start_idx + num_features
+            x[i, start_idx:end_idx] = ds[year, feature_set[:-1]]
+        feature = val.R + val.RBI
+        bestyear = val[feature == max(feature)]
+        y[i] = int(bestyear.leagueYear[0])
+        i += 1
+
+    return x, y
+
+def three_year_max_run_test(train, test):
+    subattr = [2] + list(range(14,26))
+    x_train, y_train = make_triplet_max_run_feature_matrix(train, subattr)
+    x_test, y_test = make_triplet_max_run_feature_matrix(test, subattr)
+
+    reg = LinearRegression().fit(x_train, y_train)
+    y_pred = reg.predict(x_test)
+    deltas = y_pred-y_test
+    # print(y_pred)
+    # print(y_test)
+    np.savetxt("./output/triplet_prediction.txt", y_pred)
+    np.savetxt("./output/triplet_labels.txt", y_test)
+    np.savetxt("./output/triplet_deltas.txt", deltas)
+    print('Average error: ', np.mean(abs(y_pred - y_test)))
+
+    poly = np.polyfit(y_test, y_pred, 1)
+    y_reg = poly[0] * y_test + poly[1]
+    plt.scatter(y_test, y_pred)
+    plt.plot(y_test, y_reg, 'r')
+    plt.xlabel('Best year in the league')
+    plt.ylabel('Predicted best year in the league')
+    plt.title('Linear Regression on three years\' data comparison')
+    plt.savefig('output/triplet_reg_max_run_output.png')
+    plt.clf()
 
 ## From http://www.jessicayung.com/lstms-for-time-series-in-pytorch/
 class LSTM(nn.Module):
@@ -479,3 +529,4 @@ if __name__ == '__main__':
     linear_test(train, test)
     three_year_test(train, test)
     lstm_test(train, test)
+    three_year_max_run_test(train, test)
