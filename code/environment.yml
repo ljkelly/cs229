@@ -1,10 +1,70 @@
 name: cs229-proj
 channels:
+  - pytorch
   - defaults
 dependencies:
-  - matplotlib=2.2.2
-  - numpy=1.15.0
-  - pip=10.0.1
-  - python=3.6.6
-  - pandas=0.23.4
-  - scikit-learn=0.20.0
+  - _tflow_select=2.3.0=mkl
+  - absl-py=0.6.1=py36_0
+  - astor=0.7.1=py36_0
+  - blas=1.0=mkl
+  - c-ares=1.15.0=h1de35cc_1
+  - ca-certificates=2018.03.07=0
+  - certifi=2018.10.15=py36_0
+  - cffi=1.11.5=py36h6174b99_1
+  - cycler=0.10.0=py36hfc81398_0
+  - cython=0.29=py36h0a44026_0
+  - freetype=2.9.1=hb4e5f40_0
+  - gast=0.2.0=py36_0
+  - grpcio=1.14.1=py36h9011c5e_0
+  - h5py=2.8.0=py36h878fce3_3
+  - hdf5=1.10.2=hfa1e0ec_1
+  - intel-openmp=2019.0=118
+  - keras-applications=1.0.6=py36_0
+  - keras-preprocessing=1.0.5=py36_0
+  - kiwisolver=1.0.1=py36h0a44026_0
+  - libcxx=4.0.1=hcfea43d_1
+  - libcxxabi=4.0.1=hcfea43d_1
+  - libedit=3.1.20170329=hb402a30_2
+  - libffi=3.2.1=h475c297_4
+  - libgfortran=3.0.1=h93005f0_2
+  - libpng=1.6.35=ha441bb4_0
+  - libprotobuf=3.6.1=hd9629dc_0
+  - markdown=3.0.1=py36_0
+  - matplotlib=2.2.2=py36hbf02d85_2
+  - mkl=2018.0.3=1
+  - mkl_fft=1.0.6=py36hb8a8100_0
+  - mkl_random=1.0.1=py36h5d10147_1
+  - ncurses=6.1=h0a44026_0
+  - ninja=1.8.2=py36h04f5b5a_1
+  - numpy=1.15.0=py36h648b28d_0
+  - numpy-base=1.15.0=py36h8a80b8c_0
+  - openssl=1.0.2p=h1de35cc_0
+  - pandas=0.23.4=py36h6440ff4_0
+  - pip=10.0.1=py36_0
+  - protobuf=3.6.1=py36h0a44026_0
+  - pycparser=2.19=py36_0
+  - pyparsing=2.3.0=py36_0
+  - python=3.6.6=hc167b69_0
+  - python-dateutil=2.7.5=py36_0
+  - pytz=2018.7=py36_0
+  - readline=7.0=h1de35cc_5
+  - scikit-learn=0.20.0=py36h4f467ca_1
+  - scipy=1.1.0=py36hf1f7d93_0
+  - setuptools=40.6.2=py36_0
+  - six=1.11.0=py36_1
+  - sqlite=3.25.3=ha441bb4_0
+  - tensorboard=1.12.0=py36hdc36e2c_0
+  - tensorflow=1.12.0=mkl_py36h2b2bbaf_0
+  - tensorflow-base=1.12.0=mkl_py36h70e0e9a_0
+  - termcolor=1.1.0=py36_1
+  - tk=8.6.8=ha441bb4_0
+  - tornado=5.1.1=py36h1de35cc_0
+  - werkzeug=0.14.1=py36_0
+  - wheel=0.32.2=py36_0
+  - xz=5.2.4=h1de35cc_4
+  - zlib=1.2.11=hf3cbc9b_2
+  - pytorch=1.0.0=py3.6_1
+  - pip:
+    - torch==1.0.0
+prefix: /Users/mattskl/miniconda3/envs/cs229-proj
+
