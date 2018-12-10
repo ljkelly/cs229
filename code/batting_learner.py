@@ -349,8 +349,8 @@ def lstm_test(train, test):
     ## Select # hidden based on this: https://datascience.stackexchange.com/questions/10615/number-of-parameters-in-an-lstm-model
     n_hidden = 64
 
-    learning_rate = 0.0005
-    n_epochs = 50
+    learning_rate = 0.00025
+    n_epochs = 100
     n_features = len([2] + list(range(14,25)))
     n_train = len(train.keys())
 
