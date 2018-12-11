@@ -222,14 +222,20 @@ def prep_lstm_input_tensor(player_data, max_years=100):
     n_features = len(subattr)
     # Player data sometimes not ordered by increasing year..
     true_career_len = np.amax(player_data.values[:, -2])
-    # career_len = min(max_years, true_career_len)
+
+    hits = player_data.R + player_data.RBI
+    bestyear = player_data[hits == max(hits)]
+    bestyear = int(bestyear.leagueYear[0])
+    # print(bestyear, true_career_len)
+
+    career_len = min(max_years, true_career_len)
 
     # # Zero-pad stats to 20 years so LTSM doens't just learn # of input steps==>output during training
     # career_len = max(20, true_career_len)
     # # Just use 10 years of data?
     # career_len = 10
 
-    career_len = max(max_years, 6)
+    # career_len = max(max_years, 6)
 
     # # Produce truncated, non-zero-padded tensors for prediction phase.
     # career_len = min(career_len, max_years)
@@ -243,7 +249,8 @@ def prep_lstm_input_tensor(player_data, max_years=100):
             break
         tensor[year-1][0][:] = torch.from_numpy(player_data.values[i, subattr].astype(float))
 
-    return true_career_len, tensor
+    # return true_career_len, tensor
+    return bestyear, true_career_len, tensor
 
 
 def linear_test(train, test):
@@ -257,15 +264,15 @@ def linear_test(train, test):
     x_test, y_test = make_labels_and_feature_matrix(test)
 
     reg = LinearRegression().fit(x_train, y_train)
-    # print(reg.score(x_train, y_train))
-    # print(reg.coef_)
-    # print(reg.intercept_)
+    y_pred_train = reg.predict(x_train)
+    deltas_train = y_pred_train - y_train
     y_pred = reg.predict(x_test)
     deltas = y_pred-y_test
     np.savetxt("./output/linear_prediction.txt", y_pred)
     np.savetxt("./output/linear_labels.txt", y_test)
     np.savetxt("./output/linear_deltas.txt", deltas)
-    print('Average error: ', np.mean(abs(y_pred - y_test)))
+    print('Average training error: ', np.mean(abs(deltas_train)))
+    print('Average test error: ', np.mean(abs(y_pred - y_test)))
 
     poly = np.polyfit(y_test, y_pred, 1)
     y_reg = poly[0] * y_test + poly[1]
@@ -289,6 +296,8 @@ def three_year_test(train, test):
     x_test, y_test = make_triplet_feature_matrix(test, subattr)
 
     reg = LinearRegression().fit(x_train, y_train)
+    y_pred_train = reg.predict(x_train)
+    deltas_train = y_pred_train - y_train
     y_pred = reg.predict(x_test)
     deltas = y_pred-y_test
     # print(y_pred)
@@ -296,7 +305,8 @@ def three_year_test(train, test):
     np.savetxt("./output/triplet_prediction.txt", y_pred)
     np.savetxt("./output/triplet_labels.txt", y_test)
     np.savetxt("./output/triplet_deltas.txt", deltas)
-    print('Average error: ', np.mean(abs(y_pred - y_test)))
+    print('Average training error: ', np.mean(abs(deltas_train)))
+    print('Average test error: ', np.mean(abs(y_pred - y_test)))
 
     poly = np.polyfit(y_test, y_pred, 1)
     y_reg = poly[0] * y_test + poly[1]
@@ -409,17 +419,17 @@ def lstm_test(train, test):
 
     # Prep training tensors
     for key in train.keys():
-        career_len, p_tensor = prep_lstm_input_tensor(train[key], 3)
+        peak_year, career_len, p_tensor = prep_lstm_input_tensor(train[key], 3)
         tensors.append(p_tensor)
-        career_lens.append(career_len)
+        career_lens.append(np.asarray([peak_year, career_len]))
     n_tensors = len(tensors)
 
 
     # Create model:
     # n_features for each input timestep
-    # output single value
-    # 1 LSTM layer (and 1 FC layer to convert stats to career length)
-    model = LSTM(n_features, n_hidden, batch_size=1, output_dim=1, num_layers=1)
+    # output pair of values: <peak year, career length>
+    # 1 LSTM layer (and 1 FC layer to convert stats to <peak year, career length>)
+    model = LSTM(n_features, n_hidden, batch_size=1, output_dim=2, num_layers=1)
 
     # Use MSE since we're looking at career length match.
     loss_fn = torch.nn.MSELoss()
@@ -444,7 +454,7 @@ def lstm_test(train, test):
             # Forward pass
             y_pred = model(tensors[i])
 
-            loss = loss_fn(y_pred, torch.tensor(float(career_lens[i])))
+            loss = loss_fn(y_pred, torch.from_numpy(np.asarray(career_lens[i])).float())
             hist[t] += loss.item()
 
             # Zero out gradient, else they will accumulate between epochs/samples
@@ -456,21 +466,40 @@ def lstm_test(train, test):
             # Update parameters
             optimiser.step()
 
-            if j % 1000 == 0:
-                print("Epoch ", t, "item ", j, "MSE: ", loss.item())
+            # if j % 1000 == 0:
+            #     print("Epoch ", t, "item ", j, "MSE: ", loss.item())
             j += 1
         hist[t] /= float(n_tensors)
         print("Epoch ", t, "average MSE: ", hist[t])
 
+    # Calculate training error
+    train_preds = []
+    for i in range(n_tensors):
+        # Reset hidden state between predictions
+        model.hidden = model.init_hidden()
+
+        # Forward pass
+        y_pred = model(tensors[i])
+        train_preds.append(y_pred.detach().numpy())
+
+    train_preds_p = np.asarray(train_preds)[:,0]
+    train_career_lens_p = np.asarray(career_lens)[:,0]
+    deltas_train = train_preds_p - train_career_lens_p
+    print('Average peak year training error: ', np.mean(abs(deltas_train)))
+
+    train_preds = np.asarray(train_preds)[:,1]
+    train_career_lens = np.asarray(career_lens)[:,1]
+    deltas_train = train_preds - train_career_lens
+    print('Average career len training error: ', np.mean(abs(deltas_train)))
 
     test_tensors = []
     test_career_lens = []
 
     # Prep test tensors - only first 3 years of timeseries.
     for key in test.keys():
-        career_len, p_tensor = prep_lstm_input_tensor(test[key], 3)
+        peak_year, career_len, p_tensor = prep_lstm_input_tensor(test[key], 3)
         test_tensors.append(p_tensor)
-        test_career_lens.append(career_len)
+        test_career_lens.append(np.asarray([peak_year, career_len]))
     n_test_tensors = len(test_tensors)
 
     test_preds = []
@@ -480,17 +509,22 @@ def lstm_test(train, test):
 
         # Forward pass
         y_pred = model(test_tensors[i])
-        test_preds.append(y_pred.item())
+        test_preds.append(y_pred.detach().numpy())
 
-    test_preds = np.asarray(test_preds)
-    test_career_lens = np.asarray(test_career_lens)
+    test_preds_p = np.asarray(test_preds)[:,0]
+    test_career_lens_p = np.asarray(test_career_lens)[:,0]
+    deltas_p = test_preds_p-test_career_lens_p
+    print('Average peak year test error: ', np.mean(abs(deltas_p)))
+
+    test_preds = np.asarray(test_preds)[:,1]
+    test_career_lens = np.asarray(test_career_lens)[:,1]
     deltas = test_preds-test_career_lens
 
     np.savetxt("./output/lstm_epoch_err.txt", hist)
     np.savetxt("./output/lstm_prediction.txt", test_preds)
     np.savetxt("./output/lstm_labels.txt", test_career_lens)
     np.savetxt("./output/lstm_deltas.txt", deltas)
-    print('Average error: ', np.mean(abs(deltas)))
+    print('Average career len test error: ', np.mean(abs(deltas)))
 
     poly = np.polyfit(test_career_lens, test_preds, 1)
     y_reg = poly[0] * test_career_lens + poly[1]
@@ -499,7 +533,26 @@ def lstm_test(train, test):
     plt.xlabel('True number of years in the league')
     plt.ylabel('Predicted number of years in the league')
     plt.title('LSTM data comparison')
-    plt.savefig('output/lstm_output.png')
+    plt.savefig('output/lstm_len_output.png')
+    plt.clf()
+
+    poly = np.polyfit(test_career_lens_p, test_preds_p, 1)
+    y_reg = poly[0] * test_career_lens_p + poly[1]
+    plt.scatter(test_career_lens_p, test_preds_p)
+    plt.plot(test_career_lens_p, y_reg, 'r')
+    plt.xlabel('True peak year in career')
+    plt.ylabel('Predicted peak year in career')
+    plt.title('LSTM data comparison')
+    plt.savefig('output/lstm_peak_output.png')
+    plt.clf()
+
+    plt.plot(range(1,n_epochs+1), hist, '-o')
+    plt.xlabel('Number of epochs trained')
+    plt.ylabel('Average MSE over all training examples')
+    plt.title('LSTM training accuracy over time')
+    plt.savefig('output/lstm_train.png')
+    plt.clf()
+
 
 
 if __name__ == '__main__':
@@ -526,7 +579,11 @@ if __name__ == '__main__':
         train = read_json('../data/batting_train.json')
         test  = read_json('../data/batting_test.json')
 
+    print("\nRunning vanilla linear regression for career length.")
     linear_test(train, test)
+    print("\nRunning triplet linear regression for career length.")
     three_year_test(train, test)
+    print("\nRunning LSTM for <career length, peak year>.")
     lstm_test(train, test)
+    print("\nRunning triplet linear regression for peak year.")
     three_year_max_run_test(train, test)
